@@ -89,13 +89,13 @@ type BatchProcessor[T, R any] struct {
 	batchSize int
 	timeout   time.Duration
 	process   func([]*engine.Event[T]) ([]*engine.Event[R], error)
-	
+
 	buffer []*engine.Event[T]
 	timer  *time.Timer
 }
 
 // NewBatchProcessor creates a new batch processor
-func NewBatchProcessor[T, R any](name string, batchSize int, timeout time.Duration, 
+func NewBatchProcessor[T, R any](name string, batchSize int, timeout time.Duration,
 	process func([]*engine.Event[T]) ([]*engine.Event[R], error)) *BatchProcessor[T, R] {
 	return &BatchProcessor[T, R]{
 		name:      name,
@@ -111,11 +111,11 @@ func (p *BatchProcessor[T, R]) Process(ctx context.Context, event *engine.Event[
 	// This is a simplified batch processor
 	// In a real implementation, you'd need more sophisticated batch management
 	p.buffer = append(p.buffer, event)
-	
+
 	if len(p.buffer) >= p.batchSize {
 		return p.processBatch()
 	}
-	
+
 	return nil, nil // Wait for more events
 }
 
@@ -124,18 +124,18 @@ func (p *BatchProcessor[T, R]) processBatch() (*engine.Event[R], error) {
 	if len(p.buffer) == 0 {
 		return nil, nil
 	}
-	
+
 	results, err := p.process(p.buffer)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	p.buffer = p.buffer[:0] // Clear buffer
-	
+
 	if len(results) > 0 {
 		return results[0], nil // Return first result
 	}
-	
+
 	return nil, nil
 }
 
@@ -172,13 +172,13 @@ func SquareTransform() *TransformProcessor[NumberData, NumberData] {
 			},
 			Metadata: make(map[string]interface{}),
 		}
-		
+
 		// Copy original metadata
 		for k, v := range event.Metadata {
 			result.Metadata[k] = v
 		}
 		result.Metadata["original_value"] = event.Data.Value
-		
+
 		return result, nil
 	})
 }
@@ -192,7 +192,7 @@ func StringToNumberTransform() *TransformProcessor[StringData, NumberData] {
 			// If parsing fails, use string length as value
 			value = float64(event.Data.Length)
 		}
-		
+
 		result := &engine.Event[NumberData]{
 			ID:        engine.GenerateID(),
 			Timestamp: time.Now(),
@@ -202,13 +202,13 @@ func StringToNumberTransform() *TransformProcessor[StringData, NumberData] {
 			},
 			Metadata: make(map[string]interface{}),
 		}
-		
+
 		// Copy metadata
 		for k, v := range event.Metadata {
 			result.Metadata[k] = v
 		}
 		result.Metadata["original_text"] = event.Data.Text
-		
+
 		return result, nil
 	})
 }
@@ -234,20 +234,20 @@ func NewMovingAverageTransform(windowSize int) *MovingAverageTransform {
 func (p *MovingAverageTransform) Process(ctx context.Context, event *engine.Event[NumberData]) (*engine.Event[NumberData], error) {
 	p.window[p.index%p.windowSize] = event.Data.Value
 	p.index++
-	
+
 	// Calculate average
 	var sum float64
 	count := p.windowSize
 	if p.index < p.windowSize {
 		count = p.index
 	}
-	
+
 	for i := 0; i < count; i++ {
 		sum += p.window[i]
 	}
-	
+
 	average := sum / float64(count)
-	
+
 	result := &engine.Event[NumberData]{
 		ID:        engine.GenerateID(),
 		Timestamp: time.Now(),
@@ -257,14 +257,14 @@ func (p *MovingAverageTransform) Process(ctx context.Context, event *engine.Even
 		},
 		Metadata: make(map[string]interface{}),
 	}
-	
+
 	// Copy metadata
 	for k, v := range event.Metadata {
 		result.Metadata[k] = v
 	}
 	result.Metadata["window_size"] = p.windowSize
 	result.Metadata["original_value"] = event.Data.Value
-	
+
 	return result, nil
 }
 
@@ -277,7 +277,7 @@ func (p *MovingAverageTransform) Name() string {
 type AggregatorProcessor struct {
 	name      string
 	batchSize int
-	
+
 	count  int64
 	sum    float64
 	min    float64
@@ -299,23 +299,23 @@ func NewAggregatorProcessor(batchSize int) *AggregatorProcessor {
 // Process accumulates values and emits aggregate when batch is full
 func (p *AggregatorProcessor) Process(ctx context.Context, event *engine.Event[NumberData]) (*engine.Event[AggregateData], error) {
 	value := event.Data.Value
-	
+
 	p.count++
 	p.sum += value
 	p.values = append(p.values, value)
-	
+
 	if value < p.min {
 		p.min = value
 	}
 	if value > p.max {
 		p.max = value
 	}
-	
+
 	// Emit aggregate when batch is full
 	if len(p.values) >= p.batchSize {
 		return p.emitAggregate()
 	}
-	
+
 	return nil, nil // Wait for more values
 }
 
@@ -324,9 +324,9 @@ func (p *AggregatorProcessor) emitAggregate() (*engine.Event[AggregateData], err
 	if len(p.values) == 0 {
 		return nil, nil
 	}
-	
+
 	average := p.sum / float64(len(p.values))
-	
+
 	// Calculate standard deviation
 	var variance float64
 	for _, v := range p.values {
@@ -335,7 +335,7 @@ func (p *AggregatorProcessor) emitAggregate() (*engine.Event[AggregateData], err
 	}
 	variance /= float64(len(p.values))
 	stdDev := math.Sqrt(variance)
-	
+
 	result := &engine.Event[AggregateData]{
 		ID:        engine.GenerateID(),
 		Timestamp: time.Now(),
@@ -349,13 +349,13 @@ func (p *AggregatorProcessor) emitAggregate() (*engine.Event[AggregateData], err
 		},
 		Metadata: make(map[string]interface{}),
 	}
-	
+
 	// Reset for next batch
 	p.values = p.values[:0]
 	p.sum = 0
 	p.min = math.Inf(1)
 	p.max = math.Inf(-1)
-	
+
 	return result, nil
 }
 
@@ -389,14 +389,14 @@ func NewRandomNumberSource(name string, min, max float64, rate time.Duration) *R
 func (s *RandomNumberSource) Generate(ctx context.Context, output chan<- *engine.Event[NumberData]) {
 	ticker := time.NewTicker(s.rate)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
 			value := s.min + s.rng.Float64()*(s.max-s.min)
-			
+
 			event := &engine.Event[NumberData]{
 				ID:        engine.GenerateID(),
 				Timestamp: time.Now(),
@@ -406,7 +406,7 @@ func (s *RandomNumberSource) Generate(ctx context.Context, output chan<- *engine
 				},
 				Metadata: make(map[string]interface{}),
 			}
-			
+
 			select {
 			case output <- event:
 			case <-ctx.Done():

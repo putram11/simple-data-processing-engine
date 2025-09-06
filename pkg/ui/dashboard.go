@@ -28,7 +28,7 @@ func NewDashboard(pipeline *engine.Pipeline) *Dashboard {
 func (d *Dashboard) Start(ctx context.Context) {
 	// Start HTTP metrics server
 	go d.startHTTPServer(ctx)
-	
+
 	// Start terminal dashboard
 	go d.startTerminalDashboard(ctx)
 }
@@ -36,27 +36,27 @@ func (d *Dashboard) Start(ctx context.Context) {
 // startHTTPServer starts HTTP endpoint for metrics
 func (d *Dashboard) startHTTPServer(ctx context.Context) {
 	mux := http.NewServeMux()
-	
+
 	// Metrics endpoint
 	mux.HandleFunc("/metrics", d.metricsHandler)
-	
+
 	// Health check endpoint
 	mux.HandleFunc("/health", d.healthHandler)
-	
+
 	// Dashboard endpoint
 	mux.HandleFunc("/dashboard", d.dashboardHandler)
-	
+
 	d.server = &http.Server{
 		Addr:    ":8080",
 		Handler: mux,
 	}
-	
+
 	go func() {
 		if err := d.server.ListenAndServe(); err != http.ErrServerClosed {
 			fmt.Printf("HTTP server error: %v\n", err)
 		}
 	}()
-	
+
 	// Shutdown when context is cancelled
 	<-ctx.Done()
 	d.server.Shutdown(context.Background())
@@ -65,36 +65,36 @@ func (d *Dashboard) startHTTPServer(ctx context.Context) {
 // metricsHandler serves JSON metrics
 func (d *Dashboard) metricsHandler(w http.ResponseWriter, r *http.Request) {
 	metrics := d.pipeline.GetMetrics()
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	
+
 	json.NewEncoder(w).Encode(metrics)
 }
 
 // healthHandler serves health check
 func (d *Dashboard) healthHandler(w http.ResponseWriter, r *http.Request) {
 	metrics := d.pipeline.GetMetrics()
-	
+
 	status := "healthy"
 	httpStatus := http.StatusOK
-	
+
 	if metrics.OverallHealth < 50 {
 		status = "unhealthy"
 		httpStatus = http.StatusServiceUnavailable
 	} else if metrics.OverallHealth < 80 {
 		status = "degraded"
 	}
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(httpStatus)
-	
+
 	response := map[string]interface{}{
-		"status": status,
-		"health": metrics.OverallHealth,
+		"status":    status,
+		"health":    metrics.OverallHealth,
 		"timestamp": time.Now(),
 	}
-	
+
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -212,7 +212,7 @@ func (d *Dashboard) dashboardHandler(w http.ResponseWriter, r *http.Request) {
 </body>
 </html>
     `
-	
+
 	w.Header().Set("Content-Type", "text/html")
 	w.Write([]byte(html))
 }
@@ -221,30 +221,30 @@ func (d *Dashboard) dashboardHandler(w http.ResponseWriter, r *http.Request) {
 func (d *Dashboard) startTerminalDashboard(ctx context.Context) {
 	ticker := time.NewTicker(3 * time.Second)
 	defer ticker.Stop()
-	
+
 	titleColor := color.New(color.FgCyan, color.Bold)
 	successColor := color.New(color.FgGreen)
 	warningColor := color.New(color.FgYellow)
 	errorColor := color.New(color.FgRed)
-	
+
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
 			metrics := d.pipeline.GetMetrics()
-			
+
 			// Clear screen and show metrics
 			fmt.Print("\033[2J\033[H") // Clear screen
-			
+
 			titleColor.Println("📊 Real-time Pipeline Metrics")
 			fmt.Println("═══════════════════════════════")
-			
+
 			// Overall metrics
 			fmt.Printf("🏷️  Pipeline: %s\n", metrics.PipelineName)
 			fmt.Printf("⚡ Throughput: %.2f events/sec\n", metrics.TotalThroughput)
 			fmt.Printf("⏱️  Latency: %v\n", metrics.TotalLatency)
-			
+
 			// Health indicator
 			fmt.Print("💚 Health: ")
 			if metrics.OverallHealth >= 80 {
@@ -254,19 +254,19 @@ func (d *Dashboard) startTerminalDashboard(ctx context.Context) {
 			} else {
 				errorColor.Printf("%.1f%% (Poor)\n", metrics.OverallHealth)
 			}
-			
+
 			fmt.Printf("📅 Updated: %s\n", metrics.Timestamp.Format("15:04:05"))
-			
+
 			fmt.Println("\n📈 Stage Performance:")
 			fmt.Println("─────────────────────")
-			
+
 			for _, stage := range metrics.StageMetrics {
 				fmt.Printf("🔧 %s:\n", stage.Name)
-				fmt.Printf("   📥 In: %d  📤 Out: %d  ❌ Err: %d\n", 
+				fmt.Printf("   📥 In: %d  📤 Out: %d  ❌ Err: %d\n",
 					stage.InputCount, stage.OutputCount, stage.ErrorCount)
-				fmt.Printf("   📊 Rate: %.1f/sec  ⏱️ Avg: %v\n", 
+				fmt.Printf("   📊 Rate: %.1f/sec  ⏱️ Avg: %v\n",
 					stage.InputRate, stage.AvgDuration)
-				
+
 				// Success rate with color
 				fmt.Print("   ✅ Success: ")
 				if stage.SuccessRate >= 95 {
@@ -276,10 +276,10 @@ func (d *Dashboard) startTerminalDashboard(ctx context.Context) {
 				} else {
 					errorColor.Printf("%.1f%%", stage.SuccessRate)
 				}
-				
+
 				fmt.Printf("  👥 Workers: %d/%d\n\n", stage.ActiveWorkers, stage.MaxWorkers)
 			}
-			
+
 			fmt.Println("🌐 Web Dashboard: http://localhost:8080/dashboard")
 			fmt.Println("📊 JSON Metrics: http://localhost:8080/metrics")
 		}

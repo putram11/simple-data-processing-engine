@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"simple-data-processing-engine/pkg/engine"
@@ -41,7 +40,7 @@ func main() {
 	go func() {
 		eventChan := make(chan *engine.Event[processors.NumberData], 1000)
 		go numberSource.Generate(ctx, eventChan)
-		
+
 		for event := range eventChan {
 			select {
 			case source <- event:
@@ -81,7 +80,7 @@ func main() {
 	// Graceful shutdown
 	fmt.Print("\n🛑 Shutting down pipeline... ")
 	cancel()
-	
+
 	if err := pipeline.Stop(); err != nil {
 		errorColor.Printf("❌ Shutdown error: %v\n", err)
 	} else {
@@ -117,7 +116,7 @@ func buildAdvancedPipeline() *engine.Pipeline {
 	})
 
 	// Build complex pipeline with multiple stages
-	
+
 	// Stage 1: Range Filter (1-500)
 	rangeFilter := createFilterStage("range-filter", processors.RangeFilter(1, 500))
 	builder.AddStage(rangeFilter)
@@ -199,21 +198,21 @@ func printBanner() {
 func printFinalMetrics(pipeline *engine.Pipeline) {
 	fmt.Println("\n📊 Final Pipeline Metrics:")
 	fmt.Println("═════════════════════════════")
-	
+
 	metrics := pipeline.GetMetrics()
-	
+
 	infoColor := color.New(color.FgBlue)
 	valueColor := color.New(color.FgGreen, color.Bold)
-	
+
 	infoColor.Printf("Pipeline: ")
 	valueColor.Println(metrics.PipelineName)
-	
+
 	infoColor.Printf("Total Throughput: ")
 	valueColor.Printf("%.2f events/sec\n", metrics.TotalThroughput)
-	
+
 	infoColor.Printf("Total Latency: ")
 	valueColor.Printf("%v\n", metrics.TotalLatency)
-	
+
 	infoColor.Printf("Overall Health: ")
 	if metrics.OverallHealth >= 80 {
 		color.Green("%.2f%%", metrics.OverallHealth)
@@ -223,15 +222,15 @@ func printFinalMetrics(pipeline *engine.Pipeline) {
 		color.Red("%.2f%%", metrics.OverallHealth)
 	}
 	fmt.Println()
-	
+
 	fmt.Println("\n📈 Stage Breakdown:")
 	for _, stage := range metrics.StageMetrics {
 		fmt.Printf("  • %s:\n", stage.Name)
-		fmt.Printf("    Input: %d | Output: %d | Errors: %d\n", 
+		fmt.Printf("    Input: %d | Output: %d | Errors: %d\n",
 			stage.InputCount, stage.OutputCount, stage.ErrorCount)
-		fmt.Printf("    Throughput: %.2f/sec | Avg Duration: %v\n", 
+		fmt.Printf("    Throughput: %.2f/sec | Avg Duration: %v\n",
 			stage.Throughput, stage.AvgDuration)
-		fmt.Printf("    Success Rate: %.2f%% | Workers: %d/%d\n", 
+		fmt.Printf("    Success Rate: %.2f%% | Workers: %d/%d\n",
 			stage.SuccessRate, stage.ActiveWorkers, stage.MaxWorkers)
 		fmt.Println()
 	}
