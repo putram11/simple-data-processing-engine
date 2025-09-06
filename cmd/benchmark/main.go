@@ -19,7 +19,7 @@ func main() {
 
 	// Create high-performance pipeline
 	pipeline := createBenchmarkPipeline()
-	
+
 	// Create high-volume data source
 	source := make(chan interface{}, 10000)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -33,7 +33,7 @@ func main() {
 
 	fmt.Println("⏱️ Starting benchmark...")
 	start := time.Now()
-	
+
 	// Start pipeline
 	if err := pipeline.Start(source); err != nil {
 		fmt.Printf("❌ Failed to start pipeline: %v\n", err)
@@ -43,7 +43,7 @@ func main() {
 	// Run benchmark for specified duration
 	benchmarkDuration := 30 * time.Second
 	fmt.Printf("🔥 Running benchmark for %v...\n", benchmarkDuration)
-	
+
 	timer := time.NewTimer(benchmarkDuration)
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
@@ -58,7 +58,7 @@ func main() {
 	// Stop pipeline and show results
 	fmt.Println("🏁 Stopping pipeline...")
 	cancel()
-	
+
 	if err := pipeline.Stop(); err != nil {
 		fmt.Printf("❌ Shutdown error: %v\n", err)
 	}
@@ -79,19 +79,19 @@ func createBenchmarkPipeline() *engine.Pipeline {
 		WithConfig(config)
 
 	// High-performance stages with more workers
-	
+
 	// Stage 1: Range filter with 8 workers
-	rangeFilter := createHighPerfFilterStage("range-filter", 
+	rangeFilter := createHighPerfFilterStage("range-filter",
 		processors.RangeFilter(1, 500), 8)
 	builder.AddStage(rangeFilter)
 
 	// Stage 2: Even filter with 8 workers
-	evenFilter := createHighPerfFilterStage("even-filter", 
+	evenFilter := createHighPerfFilterStage("even-filter",
 		processors.EvenNumberFilter(), 8)
 	builder.AddStage(evenFilter)
 
 	// Stage 3: Square transform with 12 workers
-	squareTransform := createHighPerfTransformStage("square-transform", 
+	squareTransform := createHighPerfTransformStage("square-transform",
 		processors.SquareTransform(), 12)
 	builder.AddStage(squareTransform)
 
@@ -135,12 +135,12 @@ func createHighPerfMovingAvgStage(name string, windowSize int, workers int) engi
 
 func generateHighVolumeData(ctx context.Context, output chan<- interface{}) {
 	defer close(output)
-	
+
 	ticker := time.NewTicker(1 * time.Millisecond) // Very high frequency
 	defer ticker.Stop()
-	
+
 	counter := 1
-	
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -155,7 +155,7 @@ func generateHighVolumeData(ctx context.Context, output chan<- interface{}) {
 				},
 				Metadata: make(map[string]interface{}),
 			}
-			
+
 			select {
 			case output <- event:
 				counter++
@@ -171,18 +171,18 @@ func generateHighVolumeData(ctx context.Context, output chan<- interface{}) {
 func monitorPerformance(ctx context.Context, pipeline *engine.Pipeline) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
 			metrics := pipeline.GetMetrics()
-			
+
 			fmt.Printf("\n📊 Performance Update:\n")
 			fmt.Printf("   Throughput: %.0f events/sec\n", metrics.TotalThroughput)
 			fmt.Printf("   Health: %.1f%%\n", metrics.OverallHealth)
-			
+
 			// Show top performing stage
 			var bestStage string
 			var bestThroughput float64
@@ -201,14 +201,14 @@ func printBenchmarkResults(pipeline *engine.Pipeline, duration time.Duration) {
 	fmt.Println("\n" + strings.Repeat("=", 60))
 	fmt.Println("🏆 BENCHMARK RESULTS")
 	fmt.Println(strings.Repeat("=", 60))
-	
+
 	metrics := pipeline.GetMetrics()
-	
+
 	fmt.Printf("⏱️  Duration: %v\n", duration)
 	fmt.Printf("⚡ Peak Throughput: %.0f events/sec\n", metrics.TotalThroughput)
 	fmt.Printf("🎯 Overall Health: %.1f%%\n", metrics.OverallHealth)
 	fmt.Printf("📊 Total Latency: %v\n", metrics.TotalLatency)
-	
+
 	fmt.Println("\n📈 Stage Performance:")
 	for _, stage := range metrics.StageMetrics {
 		fmt.Printf("  🔧 %s:\n", stage.Name)
@@ -219,7 +219,7 @@ func printBenchmarkResults(pipeline *engine.Pipeline, duration time.Duration) {
 		fmt.Printf("     ✅ Success Rate: %.1f%%\n", stage.SuccessRate)
 		fmt.Printf("     👥 Workers Used: %d\n\n", stage.MaxWorkers)
 	}
-	
+
 	// Calculate total events processed
 	var totalProcessed int64
 	for _, stage := range metrics.StageMetrics {
@@ -227,10 +227,10 @@ func printBenchmarkResults(pipeline *engine.Pipeline, duration time.Duration) {
 			totalProcessed = stage.InputCount
 		}
 	}
-	
+
 	fmt.Printf("🎊 Total Events Processed: %d\n", totalProcessed)
 	fmt.Printf("📊 Average Rate: %.0f events/sec\n", float64(totalProcessed)/duration.Seconds())
-	
+
 	// Performance rating
 	avgThroughput := float64(totalProcessed) / duration.Seconds()
 	var rating string
@@ -243,7 +243,7 @@ func printBenchmarkResults(pipeline *engine.Pipeline, duration time.Duration) {
 	} else {
 		rating = "⚠️  NEEDS OPTIMIZATION"
 	}
-	
+
 	fmt.Printf("\n🏅 Performance Rating: %s\n", rating)
 	fmt.Println(strings.Repeat("=", 60))
 }

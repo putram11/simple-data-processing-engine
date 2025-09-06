@@ -86,11 +86,11 @@ func TestStageBasicOperation(t *testing.T) {
 	// Check metrics
 	metrics := stage.GetMetrics()
 	snapshot := metrics.GetSnapshot()
-	
+
 	if snapshot.InputCount != int64(len(testEvents)) {
 		t.Errorf("Expected input count %d, got %d", len(testEvents), snapshot.InputCount)
 	}
-	
+
 	if snapshot.OutputCount != int64(len(testEvents)) {
 		t.Errorf("Expected output count %d, got %d", len(testEvents), snapshot.OutputCount)
 	}
@@ -152,11 +152,11 @@ func TestStageWithErrors(t *testing.T) {
 	// Check metrics for errors
 	metrics := stage.GetMetrics()
 	snapshot := metrics.GetSnapshot()
-	
+
 	if snapshot.ErrorCount != 2 {
 		t.Errorf("Expected 2 errors, got %d", snapshot.ErrorCount)
 	}
-	
+
 	if snapshot.SuccessRate != 50.0 {
 		t.Errorf("Expected 50%% success rate, got %.1f%%", snapshot.SuccessRate)
 	}
@@ -166,7 +166,7 @@ func TestStageWithErrors(t *testing.T) {
 
 func TestPipelineIntegration(t *testing.T) {
 	// Create a simple pipeline: input -> double -> add_one
-	
+
 	doubler := &MockProcessor{
 		name: "doubler",
 		processFunc: func(ctx context.Context, event *Event[int]) (*Event[int], error) {
@@ -178,7 +178,7 @@ func TestPipelineIntegration(t *testing.T) {
 			}, nil
 		},
 	}
-	
+
 	adder := &MockProcessor{
 		name: "adder",
 		processFunc: func(ctx context.Context, event *Event[int]) (*Event[int], error) {
@@ -201,16 +201,16 @@ func TestPipelineIntegration(t *testing.T) {
 
 	// Add stages
 	stageConfig := StageConfig{Workers: 1, BufferSize: 10, Timeout: 5 * time.Second}
-	
+
 	doublerStage := NewStage("doubler", doubler, stageConfig)
 	adderStage := NewStage("adder", adder, stageConfig)
-	
+
 	pipeline.AddStage(NewGenericStage(doublerStage))
 	pipeline.AddStage(NewGenericStage(adderStage))
 
 	// Create source
 	source := make(chan interface{}, 10)
-	
+
 	// Start pipeline
 	if err := pipeline.Start(source); err != nil {
 		t.Fatalf("Failed to start pipeline: %v", err)
@@ -239,11 +239,11 @@ func TestPipelineIntegration(t *testing.T) {
 
 	// Check pipeline metrics
 	metrics := pipeline.GetMetrics()
-	
+
 	if len(metrics.StageMetrics) != 2 {
 		t.Errorf("Expected 2 stages in metrics, got %d", len(metrics.StageMetrics))
 	}
-	
+
 	// Verify each stage processed the data
 	for _, stageMetric := range metrics.StageMetrics {
 		if stageMetric.InputCount == 0 {
@@ -271,7 +271,7 @@ func BenchmarkStageProcessing(b *testing.B) {
 	output := stage.Start(input)
 
 	b.ResetTimer()
-	
+
 	go func() {
 		for i := 0; i < b.N; i++ {
 			event := &Event[int]{
@@ -292,7 +292,7 @@ func BenchmarkStageProcessing(b *testing.B) {
 	}
 
 	stage.Stop(5 * time.Second)
-	
+
 	if count != b.N {
 		b.Errorf("Expected %d events, got %d", b.N, count)
 	}

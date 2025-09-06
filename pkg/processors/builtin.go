@@ -52,7 +52,7 @@ func (p *FilterProcessor[T]) Process(ctx context.Context, event *engine.Event[T]
 	if event == nil {
 		return nil, fmt.Errorf("received nil event")
 	}
-	
+
 	if p.predicate(event) {
 		return event, nil
 	}

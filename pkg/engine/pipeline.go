@@ -91,7 +91,7 @@ func NewGenericStage[T, R any](stage *Stage[T, R]) *GenericStage[T, R] {
 func (g *GenericStage[T, R]) Start(input <-chan interface{}) <-chan interface{} {
 	typedInput := make(chan *Event[T], 100)
 	genericOutput := make(chan interface{}, 100)
-	
+
 	// Convert input
 	go func() {
 		defer close(typedInput)
@@ -101,10 +101,10 @@ func (g *GenericStage[T, R]) Start(input <-chan interface{}) <-chan interface{} 
 			}
 		}
 	}()
-	
+
 	// Start typed stage
 	typedOutput := g.stage.Start(typedInput)
-	
+
 	// Convert output
 	go func() {
 		defer close(genericOutput)
@@ -112,7 +112,7 @@ func (g *GenericStage[T, R]) Start(input <-chan interface{}) <-chan interface{} 
 			genericOutput <- item
 		}
 	}()
-	
+
 	return genericOutput
 }
 
