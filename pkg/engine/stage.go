@@ -200,3 +200,8 @@ func (s *Stage[T, R]) GetMetrics() *StageMetrics {
 func generateID() string {
 	return fmt.Sprintf("evt_%d", time.Now().UnixNano())
 }
+
+// GenerateID creates a unique identifier for events (exported version)
+func GenerateID() string {
+	return generateID()
+}
