@@ -2,6 +2,7 @@ package processors
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"math/rand"
 	"simple-data-processing-engine/pkg/engine"
@@ -48,6 +49,10 @@ func NewFilterProcessor[T any](name string, predicate func(*engine.Event[T]) boo
 
 // Process filters events based on the predicate
 func (p *FilterProcessor[T]) Process(ctx context.Context, event *engine.Event[T]) (*engine.Event[T], error) {
+	if event == nil {
+		return nil, fmt.Errorf("received nil event")
+	}
+	
 	if p.predicate(event) {
 		return event, nil
 	}
