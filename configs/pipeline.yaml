@@ -1,0 +1,57 @@
+name: "production-data-pipeline"
+shutdown_timeout: "30s"
+error_buffer_size: 1000
+health_check_interval: "5s"
+
+stages:
+  - name: "input-validator"
+    type: "filter"
+    workers: 4
+    buffer_size: 500
+    timeout: "10s"
+    config:
+      min_value: 1
+      max_value: 1000
+    
+  - name: "data-classifier"
+    type: "filter"
+    workers: 6
+    buffer_size: 300
+    config:
+      filter_type: "even_numbers"
+    
+  - name: "data-enricher"
+    type: "transform"
+    workers: 8
+    buffer_size: 400
+    config:
+      operation: "square"
+      preserve_metadata: true
+    
+  - name: "moving-average"
+    type: "transform"
+    workers: 2
+    buffer_size: 200
+    config:
+      window_size: 10
+      
+  - name: "batch-aggregator"
+    type: "aggregate"
+    workers: 1
+    buffer_size: 100
+    config:
+      batch_size: 50
+      statistics: ["count", "sum", "avg", "min", "max", "stddev"]
+
+# Monitoring configuration
+monitoring:
+  enable_prometheus: true
+  prometheus_port: 9090
+  dashboard_port: 8080
+  log_level: "info"
+  
+# Performance tuning
+performance:
+  max_memory: "1GB"
+  gc_percentage: 100
+  max_goroutines: 10000

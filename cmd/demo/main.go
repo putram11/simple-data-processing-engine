@@ -148,7 +148,8 @@ func createFilterStage(name string, processor *processors.FilterProcessor[proces
 		BufferSize: 200,
 		Timeout:    5 * time.Second,
 	}
-	return engine.NewStage(name, processor, config)
+	stage := engine.NewStage(name, processor, config)
+	return engine.NewGenericStage(stage)
 }
 
 func createTransformStage(name string, processor *processors.TransformProcessor[processors.NumberData, processors.NumberData]) engine.StageRunner {
@@ -157,7 +158,8 @@ func createTransformStage(name string, processor *processors.TransformProcessor[
 		BufferSize: 300,
 		Timeout:    5 * time.Second,
 	}
-	return engine.NewStage(name, processor, config)
+	stage := engine.NewStage(name, processor, config)
+	return engine.NewGenericStage(stage)
 }
 
 func createMovingAverageStage(name string, windowSize int) engine.StageRunner {
@@ -167,7 +169,8 @@ func createMovingAverageStage(name string, windowSize int) engine.StageRunner {
 		Timeout:    5 * time.Second,
 	}
 	processor := processors.NewMovingAverageTransform(windowSize)
-	return engine.NewStage(name, processor, config)
+	stage := engine.NewStage(name, processor, config)
+	return engine.NewGenericStage(stage)
 }
 
 func createAggregatorStage(name string, batchSize int) engine.StageRunner {
@@ -177,7 +180,8 @@ func createAggregatorStage(name string, batchSize int) engine.StageRunner {
 		Timeout:    5 * time.Second,
 	}
 	processor := processors.NewAggregatorProcessor(batchSize)
-	return engine.NewStage(name, processor, config)
+	stage := engine.NewStage(name, processor, config)
+	return engine.NewGenericStage(stage)
 }
 
 func printBanner() {
