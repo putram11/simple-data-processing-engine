@@ -196,6 +196,11 @@ func (s *Stage[T, R]) GetMetrics() *StageMetrics {
 	return s.metrics
 }
 
+// Name returns the stage name
+func (s *Stage[T, R]) Name() string {
+	return s.name
+}
+
 // generateID creates a unique identifier for events
 func generateID() string {
 	return fmt.Sprintf("evt_%d", time.Now().UnixNano())
