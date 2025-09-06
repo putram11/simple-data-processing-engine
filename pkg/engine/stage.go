@@ -143,6 +143,11 @@ func (s *Stage[T, R]) processEvent(event *Event[T], workerID int) {
 		return
 	}
 
+	// Check if result is nil (filtered out)
+	if result == nil {
+		return
+	}
+
 	// Send result to output channel
 	select {
 	case s.output <- result:
